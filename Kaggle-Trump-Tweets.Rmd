@@ -1,0 +1,69 @@
+---
+title: "Kaggle Trump Tweets"
+author: "David Jackson"
+date: "4/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(scales)
+library(dplyr)
+library(tidyr)
+library(dlookr)
+library(flextable)
+library(tidytext)
+```
+
+## Read and Combine: #realdonaldtrump and #trumptweets
+### #realdonaldtrump
+
+```{r}
+realtrump <- read.csv("./realdonaldtrump.csv")
+realtrump %>% select(retweets,favorites) %>%diagnose_numeric()
+```
+
+### #trumptweets
+
+```{r}
+trumptweets <- read.csv("./trumptweets.csv")
+trumptweets %>% select(retweets,favorites) %>%diagnose_numeric()
+trumptweets <- trumptweets %>% select(-geo)
+```
+
+### Combine  realdonaldtrump and trumptweets into single data.frame
+
+```{r}
+tweets <- rbind(realtrump,trumptweets) %>% select(-id,-link)
+tweets$date <- as.Date(tweets$date) 
+tweets$mentions <- gsub("@","",tweets$mentions)
+tweets$hashtags <- gsub("#","",tweets$hashtags)
+```
+
+### Plot Number of Tweets per day
+
+```{r}
+count_tweets <- tweets %>% group_by(date) %>%
+    summarise(Count = n(),
+              Mean = median(Count))
+count_tweets %>% ggplot() + geom_line(aes(x=date,y=Count))
+```
+
+### Plot Number of reTweets per day
+
+```{r}
+count_retweets <- tweets %>% group_by(date) %>%
+    summarise(Total = sum(retweets))
+count_retweets %>% ggplot() + geom_line(aes(x=date,y=Total)) +
+  scale_y_continuous(labels= comma)
+```
+
+### Plot Number of Tweets per day
+
+```{r}
+count_favorites <- tweets %>% group_by(date) %>%
+    summarise(Total = sum(favorites))
+count_retweets %>% ggplot() + geom_line(aes(x=date,y=Total)) +
+  scale_y_continuous(labels = comma)
+```
