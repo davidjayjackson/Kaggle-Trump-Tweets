@@ -2,7 +2,10 @@
 title: "Kaggle Trump Tweets"
 author: "David Jackson"
 date: "4/25/2021"
-output: html_document
+output: 
+  html_document: 
+    fig_width: 9
+    fig_height: 7
 ---
 
 ```{r setup, include=FALSE}
@@ -20,6 +23,7 @@ library(tidytext)
 ### #realdonaldtrump
 
 ```{r}
+rm(list=ls())
 realtrump <- read.csv("./realdonaldtrump.csv")
 realtrump %>% select(retweets,favorites) %>%diagnose_numeric()
 ```
@@ -47,7 +51,8 @@ tweets$hashtags <- gsub("#","",tweets$hashtags)
 count_tweets <- tweets %>% group_by(date) %>%
     summarise(Count = n(),
               Mean = median(Count))
-count_tweets %>% ggplot() + geom_line(aes(x=date,y=Count))
+count_tweets %>% ggplot() + geom_line(aes(x=date,y=Count)) +
+  labs(title="Count of Tweets by Day")
 ```
 
 ### Plot Number of reTweets per day
@@ -56,14 +61,30 @@ count_tweets %>% ggplot() + geom_line(aes(x=date,y=Count))
 count_retweets <- tweets %>% group_by(date) %>%
     summarise(Total = sum(retweets))
 count_retweets %>% ggplot() + geom_line(aes(x=date,y=Total)) +
-  scale_y_continuous(labels= comma)
+  scale_y_continuous(labels= comma) +
+  labs(title="Retweets: Count by Day")
 ```
 
-### Plot Number of Tweets per day
+### Plot Number of Favorites per day
 
 ```{r}
 count_favorites <- tweets %>% group_by(date) %>%
     summarise(Total = sum(favorites))
 count_retweets %>% ggplot() + geom_line(aes(x=date,y=Total)) +
-  scale_y_continuous(labels = comma)
+  scale_y_continuous(labels = comma) + 
+  labs(title="Favorites: Count by Day")
 ```
+
+### TidyText
+
+```{r}
+words_unnested <- tweets %>% 
+  unnest_tokens(word, content) %>%
+  anti_join(stop_words, by = "word") %>% filter(!word %in% c("http","https","pictwitter.com","pictwittercom","trump","realdonaldtrump","twittercom"))
+
+```
+```{r}
+library(wordcloud)
+wordcloud(words_unnested$word,max.words  = 100)
+```
+
